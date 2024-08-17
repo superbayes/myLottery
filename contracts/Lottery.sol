@@ -207,9 +207,8 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
         ticketPrice = _rate;
     }
 
-    //用户查询自己拥有token总数
-
-    //用户查询彩票的开奖日期
-
-    //提款
+    //用户查询彩票的结束时间
+    function getLotteryEndTimestamp() public view lotteryEndedOnly returns (uint256){
+        return endTime;
+    }
 }
