@@ -10,15 +10,16 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
-contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable ,ReentrancyGuardUpgradeable, UUPSUpgradeable{
     bool public lotteryEnded; //是否已经结束
     uint256 private ticketPrice = 0.1 ether;
     uint256 private fee = 5;
     uint256 private endTime;
     uint256 private winnerRate = 20; //获奖人占中人数的比例
     uint256 private winnerBoundRate = 80; //获奖人分享总奖金的比例
-    uint256 private lotteryTicketSalesDays = 7 days;//彩票售卖时长
+    uint256 private lotteryTicketSalesDays = 7 days; //彩票售卖时长
     address[] public players; //购买人列表
     mapping(address => bool) public hasBoughtTicket; //每一期,每个人只能购买一张
     mapping(address => uint256) public boughtTimestamp; //购买时间
@@ -36,12 +37,12 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(
-        address initialOwner,
-        uint256 _fee
-    ) public initializer {
+    function initialize(address initialOwner, uint256 _fee) public initializer {
         __Pausable_init();
         __Ownable_init(initialOwner);
+        __ReentrancyGuard_init();  
+        __UUPSUpgradeable_init();
+
         fee = _fee;
         endTime = block.timestamp + lotteryTicketSalesDays;
     }
@@ -54,6 +55,12 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
         _unpause();
     }
 
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        onlyOwner
+        override
+    {}
+    
     modifier onlyHuman() {
         require(isEOA(msg.sender), "Contracts are not allowed");
         _;
@@ -93,25 +100,36 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
     }
 
     //计算中奖人列表(按照二八定律,20%的人分享80%的总金额)
-    function drawWinners() public onlyOwner lotteryEndedOnly {
+    function drawWinners() public payable onlyOwner lotteryEndedOnly nonReentrant{
         require(!lotteryEnded, "Lottery already ended");
 
-        uint256 ownerFee = (address(this).balance * fee) / 100;
-        uint256 totalPrize = ((address(this).balance - ownerFee) * 80) / 100;
+        if (players.length < 100) {
+            //每一期总人数不低于100, 如果不满足,则扣除手续费用后,资金原路退回给用户
+            uint256 perPlayerGetAmount = (ticketPrice * 97) / 100;
+            for (uint256 i = 0; i < players.length; i++) {
+                payable(players[i]).transfer(perPlayerGetAmount);
+            }
+        } else {
 
-        //payable(owner).transfer(ownerFee);
+            uint256 ownerFee = (ticketPrice*players.length * fee) / 100;
+            uint256 totalPrize = (ticketPrice*players.length - ownerFee) * 80 /100;
+            //payable(owner).transfer(ownerFee);
+            uint256 numberOfWinners = (players.length * 20) / 100;
+            address[] memory winners = _pickWinners(numberOfWinners);
 
-        uint256 numberOfWinners = (players.length * 20) / 100;
-        address[] memory winners = _pickWinners(numberOfWinners);
+            numberOfWinners = winners.length;
+            for (uint256 i = 0; i < numberOfWinners; i++) {
+                payable(winners[i]).transfer(totalPrize / numberOfWinners);
+                emit sendBonusToWinner(
+                    winners[i],
+                    totalPrize / numberOfWinners
+                );
+            }
 
-        numberOfWinners = winners.length;
-        for (uint256 i = 0; i < numberOfWinners; i++) {
-            payable(winners[i]).transfer(totalPrize / numberOfWinners);
-            emit sendBonusToWinner(winners[i], totalPrize / numberOfWinners);
+            emit LotteryEnded(winners, totalPrize);
         }
-
         lotteryEnded = true;
-        emit LotteryEnded(winners, totalPrize);
+
     }
 
     //计算获奖者名单
@@ -165,7 +183,7 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
         uint256 _ticketPrice,
         uint256 _durationDays,
         uint256 _fee
-    ) public onlyOwner lotteryEndedOnly{
+    ) public onlyOwner lotteryEndedOnly {
         require(lotteryEnded, "Previous lottery has not ended");
 
         // 重置状态变量以开始新一期彩票
@@ -208,7 +226,13 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
     }
 
     //用户查询彩票的结束时间
-    function getLotteryEndTimestamp() public view lotteryEndedOnly returns (uint256){
+    function getLotteryEndTimestamp()
+        public
+        view
+        lotteryEndedOnly
+        returns (uint256)
+    {
         return endTime;
     }
 }
+
