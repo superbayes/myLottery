@@ -60,7 +60,7 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable ,R
         onlyOwner
         override
     {}
-    
+
     modifier onlyHuman() {
         require(isEOA(msg.sender), "Contracts are not allowed");
         _;
@@ -108,6 +108,7 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable ,R
             uint256 perPlayerGetAmount = (ticketPrice * 97) / 100;
             for (uint256 i = 0; i < players.length; i++) {
                 payable(players[i]).transfer(perPlayerGetAmount);
+                emit sendBonusToWinner(players[i],perPlayerGetAmount);
             }
         } else {
 
