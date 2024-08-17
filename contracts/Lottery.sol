@@ -37,13 +37,12 @@ contract MyLottery is Initializable, PausableUpgradeable, OwnableUpgradeable ,Re
         _disableInitializers();
     }
 
-    function initialize(address initialOwner, uint256 _fee) public initializer {
+    function initialize(address initialOwner) public initializer {
         __Pausable_init();
         __Ownable_init(initialOwner);
         __ReentrancyGuard_init();  
         __UUPSUpgradeable_init();
 
-        fee = _fee;
         endTime = block.timestamp + lotteryTicketSalesDays;
     }
 
