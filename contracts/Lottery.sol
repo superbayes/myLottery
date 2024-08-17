@@ -121,12 +121,8 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable ,R
             numberOfWinners = winners.length;
             for (uint256 i = 0; i < numberOfWinners; i++) {
                 payable(winners[i]).transfer(totalPrize / numberOfWinners);
-                emit sendBonusToWinner(
-                    winners[i],
-                    totalPrize / numberOfWinners
-                );
+                emit sendBonusToWinner( winners[i],totalPrize / numberOfWinners);
             }
-
             emit LotteryEnded(winners, totalPrize);
         }
         lotteryEnded = true;
