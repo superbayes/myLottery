@@ -238,7 +238,7 @@ contract MyLottery is Initializable, PausableUpgradeable, OwnableUpgradeable ,Re
     }
 
     // 检查合约余额
-    function getBalance() public view returns (uint256) {
+    function getBalance() public view onlyOwner returns (uint256) {
         return address(this).balance;
     }
 }
