@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable ,ReentrancyGuardUpgradeable, UUPSUpgradeable{
+contract MyLottery is Initializable, PausableUpgradeable, OwnableUpgradeable ,ReentrancyGuardUpgradeable, UUPSUpgradeable{
     bool public lotteryEnded; //是否已经结束
     uint256 private ticketPrice = 0.1 ether;
     uint256 private fee = 5;
