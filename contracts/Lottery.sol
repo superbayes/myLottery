@@ -13,12 +13,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
     bool public lotteryEnded; //是否已经结束
-    uint256 private ticketPrice;
-    uint256 private fee;
+    uint256 private ticketPrice = 0.1 ether;
+    uint256 private fee = 5;
     uint256 private endTime;
-    uint256 private winnerRate; //获奖人占中人数的比例
-    uint256 private winnerBoundRate; //获奖人分享总奖金的比例
-
+    uint256 private winnerRate = 20; //获奖人占中人数的比例
+    uint256 private winnerBoundRate = 80; //获奖人分享总奖金的比例
+    uint256 private lotteryTicketSalesDays = 7 days;//彩票售卖时长
     address[] public players; //购买人列表
     mapping(address => bool) public hasBoughtTicket; //每一期,每个人只能购买一张
     mapping(address => uint256) public boughtTimestamp; //购买时间
@@ -38,18 +38,12 @@ contract MyContract is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     function initialize(
         address initialOwner,
-        uint256 _fee,
-        uint256 _winnerRate,
-        uint256 _winnerBoundRate,
-        uint256 _lotteryTicketSalesDays
+        uint256 _fee
     ) public initializer {
         __Pausable_init();
         __Ownable_init(initialOwner);
         fee = _fee;
-        winnerRate = _winnerRate;
-        winnerBoundRate = _winnerBoundRate;
-        //lotteryTicketSalesDuration
-        endTime = block.timestamp + _lotteryTicketSalesDays * 86400;
+        endTime = block.timestamp + lotteryTicketSalesDays;
     }
 
     function pause() public onlyOwner {
