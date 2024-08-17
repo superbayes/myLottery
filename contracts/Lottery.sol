@@ -230,5 +230,16 @@ contract MyLottery is Initializable, PausableUpgradeable, OwnableUpgradeable ,Re
     {
         return endTime;
     }
+
+    //
+    function withDraw(uint256 _amount) public payable onlyOwner {
+        payable(msg.sender).transfer(_amount);
+        emit sendBonusToWinner(msg.sender,_amount);
+    }
+
+    // 检查合约余额
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
 }
 
