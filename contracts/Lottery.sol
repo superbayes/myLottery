@@ -112,7 +112,7 @@ contract MyLottery is Initializable, PausableUpgradeable, OwnableUpgradeable ,Re
         } else {
 
             uint256 ownerFee = (ticketPrice*players.length * fee) / 100;
-            uint256 totalPrize = (ticketPrice*players.length - ownerFee) * 80 /100;
+            uint256 totalPrize = ticketPrice*players.length - ownerFee;
             //payable(owner).transfer(ownerFee);
             uint256 numberOfWinners = (players.length * 20) / 100;
             address[] memory winners = _pickWinners(numberOfWinners);
